@@ -14,10 +14,7 @@ const {
 const { multerUpload } = require('../utils/multer');
 
 // Middlewares
-const {
-	protectSession,
-	protectProductOwner,
-} = require('../middlewares/auth.middleware');
+const { protectSession, protectProductOwner } = require('../middlewares/auth.middleware');
 const {
 	createProductValidations,
 	validateResult,
@@ -33,7 +30,7 @@ router
 	.route('/')
 	.get(getAllProducts)
 	.post(
-		multerUpload.single('productImg'),
+		multerUpload.fields([{ name: 'productImgs', maxCount: 6 }]),
 		createProductValidations,
 		validateResult,
 		createProduct
