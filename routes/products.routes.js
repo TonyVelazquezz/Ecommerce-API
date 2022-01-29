@@ -10,12 +10,14 @@ const {
 	getUserProducts,
 } = require('../controllers/products.controller');
 
+//Utils
+const { multerUpload } = require('../utils/multer');
+
 // Middlewares
 const {
 	protectSession,
 	protectProductOwner,
 } = require('../middlewares/auth.middleware');
-
 const {
 	createProductValidations,
 	validateResult,
@@ -30,7 +32,12 @@ router.use(protectSession);
 router
 	.route('/')
 	.get(getAllProducts)
-	.post(createProductValidations, validateResult, createProduct);
+	.post(
+		multerUpload.single('productImg'),
+		createProductValidations,
+		validateResult,
+		createProduct
+	);
 
 //Get all user products
 router.get('/user-products', getUserProducts);

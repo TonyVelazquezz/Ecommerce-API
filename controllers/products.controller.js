@@ -2,6 +2,7 @@ const { Op } = require('sequelize');
 
 //Model
 const { Product } = require('../models/product.model');
+const { ProductImgs } = require('../models/productImgs.model');
 const { User } = require('../models/user.model');
 
 // Utils
@@ -23,7 +24,10 @@ exports.getProductDetails = catchAsync(async (req, res, next) => {
 
 	const product = await Product.findOne({
 		where: { id },
-		include: [{ model: User, attributes: { exclude: 'password' } }],
+		include: [
+			{ model: User, attributes: { exclude: 'password' } },
+			{ model: ProductImgs },
+		],
 	});
 
 	if (!product) return next(new AppError('Product not found'), 404);
@@ -43,6 +47,12 @@ exports.createProduct = catchAsync(async (req, res, next) => {
 		quantity,
 		price,
 		userId,
+	});
+
+	// Save image path
+	await ProductImgs.create({
+		productId: newProduct.id,
+		imgPath: req.file.path,
 	});
 
 	res.status(201).json({ status: 'success', data: { newProduct } });
