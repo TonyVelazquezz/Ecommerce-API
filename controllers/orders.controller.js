@@ -15,8 +15,8 @@ exports.getUserCart = catchAsync(async (req, res, next) => {
 	const { currentUser } = req;
 
 	const cart = await Cart.findOne({
-		attributes: { exclude: ['userId', 'status'] },
 		where: { userId: currentUser.id, status: 'onGoing' },
+		attributes: { exclude: ['userId', 'status'] },
 		include: [
 			{
 				model: ProductInCart,
@@ -38,7 +38,7 @@ exports.getUserCart = catchAsync(async (req, res, next) => {
 
 	const formattedCart = formatUserCart(cart);
 
-	res.status(200).json({ status: 'success', data: { cart: formattedCart } });
+	res.status(200).json({ status: 'success', cart: formattedCart });
 });
 
 exports.addProductToCart = catchAsync(async (req, res, next) => {
@@ -53,9 +53,7 @@ exports.addProductToCart = catchAsync(async (req, res, next) => {
 	});
 
 	if (!productExists || filteredObject.quantity > productExists.quantity) {
-		return next(
-			new AppError(`Product doesn't exists or is less than quantity`, 400)
-		);
+		return next(new AppError(`Product doesn't exists or is less than quantity`, 400));
 	}
 
 	// Validate if current user already has a shopping cart
@@ -135,17 +133,12 @@ exports.updateProductCart = catchAsync(async (req, res, next) => {
 
 	if (newQuantity > +productInCart.product.quantity) {
 		return next(
-			new AppError(
-				`This product only has ${productInCart.product.quantity} items`,
-				400
-			)
+			new AppError(`This product only has ${productInCart.product.quantity} items`, 400)
 		);
 	}
 
 	if (newQuantity === productInCart.quantity) {
-		return next(
-			new AppError('You already have that quantity in that product', 400)
-		);
+		return next(new AppError('You already have that quantity in that product', 400));
 	}
 
 	let updatedTotalPrice;
@@ -161,16 +154,14 @@ exports.updateProductCart = catchAsync(async (req, res, next) => {
 	} else if (newQuantity > +productInCart.quantity) {
 		// New items were added
 		updatedTotalPrice =
-			+userCart.totalPrice +
-			(newQuantity - +productInCart.quantity) * +productInCart.price;
+			+userCart.totalPrice + (newQuantity - +productInCart.quantity) * +productInCart.price;
 
 		// Update quantity to product in cart
 		await productInCart.update({ quantity: newQuantity });
 	} else if (newQuantity < +productInCart.quantity) {
 		// Items were removed from the cart
 		updatedTotalPrice =
-			+userCart.totalPrice -
-			(+productInCart.quantity - newQuantity) * +productInCart.price;
+			+userCart.totalPrice - (+productInCart.quantity - newQuantity) * +productInCart.price;
 
 		// Update quantity to product in cart
 		await productInCart.update({ quantity: newQuantity });
@@ -244,4 +235,30 @@ exports.purchaseOrder = catchAsync(async (req, res, next) => {
 	await Promise.all(promises);
 
 	res.status(200).json({ status: 'success' });
+});
+
+exports.getUserOrders = catchAsync(async (req, res, next) => {
+	const { currentUser } = req;
+
+	const orders = await Order.findAll({
+		where: { userId: currentUser.id, status: 'active' },
+		attributes: { exclude: ['status'] },
+		include: [
+			{
+				model: ProductInOrder,
+				attributes: { exclude: ['productId', 'orderId', 'status'] },
+				where: { status: 'available' },
+				include: [
+					{
+						model: Product,
+						attributes: { exclude: ['price', 'userId', 'status', 'quantity'] },
+					},
+				],
+			},
+		],
+	});
+
+	if (!orders) return next(new AppError('orders not found', 404));
+
+	res.status(200).json({ status: 'success', orders });
 });
