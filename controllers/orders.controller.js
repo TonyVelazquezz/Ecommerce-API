@@ -10,6 +10,7 @@ const { AppError } = require('../utils/appError');
 const { catchAsync } = require('../utils/catchAsync');
 const { filterObject } = require('../utils/filterObject');
 const { formatUserCart } = require('../utils/queryFormat');
+const { Email } = require('../utils/email');
 
 exports.getUserCart = catchAsync(async (req, res, next) => {
 	const { currentUser } = req;
@@ -221,7 +222,7 @@ exports.purchaseOrder = catchAsync(async (req, res, next) => {
 		const newQuantity = product.quantity - productInCart.quantity;
 		await product.update({ quantity: newQuantity });
 
-		//Create productInOrder with orderId, productId, qty and price
+		// Create productInOrder with orderId, productId, qty and price
 		const { productId, price, quantity } = productInCart;
 
 		await ProductInOrder.create({
@@ -234,7 +235,18 @@ exports.purchaseOrder = catchAsync(async (req, res, next) => {
 
 	await Promise.all(promises);
 
-	res.status(200).json({ status: 'success' });
+	const productsInOrder = await ProductInOrder.findAll({
+		where: { orderId: newOrder.id, status: 'available' },
+		include: [{ model: Product }],
+	});
+
+	// Send email to customer for success purchase
+	await new Email(currentUser.email).sendPurchaseSuccess(
+		currentUser.name,
+		productsInOrder
+	);
+
+	res.status(200).json({ status: 'success', productsInOrder });
 });
 
 exports.getUserOrders = catchAsync(async (req, res, next) => {
@@ -246,7 +258,7 @@ exports.getUserOrders = catchAsync(async (req, res, next) => {
 		include: [
 			{
 				model: ProductInOrder,
-				attributes: { exclude: ['productId', 'orderId', 'status'] },
+				// attributes: { exclude: ['productId', 'orderId', 'status'] },
 				where: { status: 'available' },
 				include: [
 					{

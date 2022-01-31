@@ -42,13 +42,7 @@ class Email {
 	async send(template, subject, templateOptions = {}) {
 		const transport = await this.createTransport();
 
-		const htmlPath = path.join(
-			__dirname,
-			'..',
-			'views',
-			'emails',
-			`${template}.pug`
-		);
+		const htmlPath = path.join(__dirname, '..', 'views', 'emails', `${template}.pug`);
 		const html = pug.renderFile(htmlPath, templateOptions);
 
 		const mailOptions = {
@@ -64,6 +58,13 @@ class Email {
 
 	async sendWelcome(username, email) {
 		await this.send('welcome', 'New account!', { username, email });
+	}
+
+	async sendPurchaseSuccess(username, productsInOrder) {
+		await this.send('purchase', 'Successful purchase!', {
+			username,
+			productsInOrder,
+		});
 	}
 }
 
