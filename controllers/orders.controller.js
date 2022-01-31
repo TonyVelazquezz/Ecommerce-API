@@ -243,7 +243,8 @@ exports.purchaseOrder = catchAsync(async (req, res, next) => {
 	// Send email to customer for success purchase
 	await new Email(currentUser.email).sendPurchaseSuccess(
 		currentUser.name,
-		productsInOrder
+		productsInOrder,
+		newOrder.totalPrice
 	);
 
 	res.status(200).json({ status: 'success', productsInOrder });

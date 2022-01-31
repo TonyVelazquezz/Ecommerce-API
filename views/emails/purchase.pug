@@ -9,7 +9,7 @@ block emailContent
   table.body(role='presentation' cellspacing='0' cellpadding='0' border='0')
     tbody
       tr
-        th  Product
+        th Product
         th Quantity
         th Price 
       each productInOrder in productsInOrder
@@ -17,3 +17,6 @@ block emailContent
           td.align-center #{productInOrder.product.name}
           td.align-center #{productInOrder.quantity}
           td.align-center #{productInOrder.price}
+      tr
+        td.align-right.font-bold.total(colspan="2") Total
+        td.align-center.font-bold.total-price #{totalPrice}
