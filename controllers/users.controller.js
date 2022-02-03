@@ -2,12 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 //Config
-const {
-	jwtKey,
-	jwtExpire,
-	jwtCookieExpire,
-	environment,
-} = require('../config');
+const { jwtKey, jwtExpire, jwtCookieExpire, environment } = require('../config');
 
 // Models
 const { User } = require('../models/user.model');
@@ -21,7 +16,7 @@ exports.loginUser = catchAsync(async (req, res, next) => {
 	const { email, password } = req.body;
 
 	// If user already exists with email
-	const user = await User.findOne({ where: { email } });
+	const user = await User.findOne({ where: { email, status: 'available' } });
 	// Compare passwords
 	const isPasswordValid = await bcrypt.compare(password, user.password);
 
@@ -37,15 +32,21 @@ exports.loginUser = catchAsync(async (req, res, next) => {
 	const cookieOptions = {
 		httpOnly: true,
 		expires: new Date(Date.now() + jwtCookieExpire * 60 * 60 * 1000),
+		sameSite: true,
 	};
-
-	res.cookie('jwt', token, cookieOptions);
 
 	if (environment === 'production') cookieOptions.secure = true;
 
+	res.cookie('jwt', token, cookieOptions);
+
+	// Remove password from response
+	user.password = undefined;
+
 	res.status(200).json({
 		status: 'success',
-		token: token,
+		data: {
+			user,
+		},
 	});
 });
 

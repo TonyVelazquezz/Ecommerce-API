@@ -7,6 +7,7 @@ const {
 	updateProductCart,
 	purchaseOrder,
 	getUserOrders,
+	getOrderById,
 } = require('../controllers/orders.controller');
 
 // Middlewares
@@ -41,5 +42,8 @@ router.post('/purchase-order', purchaseOrder);
 
 // Get user orders
 router.get('/get-user-orders', getUserOrders);
+
+//Get order by ID
+router.get('/:id', getOrderById);
 
 module.exports = { ordersRouter: router };

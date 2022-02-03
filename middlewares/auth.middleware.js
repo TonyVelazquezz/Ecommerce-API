@@ -17,11 +17,10 @@ const { AppError } = require('../utils/appError');
 exports.protectSession = catchAsync(async (req, res, next) => {
 	let token;
 
-	if (
-		req.headers.authorization &&
-		req.headers.authorization.startsWith('Bearer')
-	) {
+	if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
 		token = req.headers.authorization.split(' ')[1];
+	} else if (req.cookies.jwt) {
+		token = req.cookies.jwt;
 	}
 
 	if (!token) return next(new AppError('Invalid session', 401));
@@ -34,7 +33,7 @@ exports.protectSession = catchAsync(async (req, res, next) => {
 		where: { id: decoded.id, status: 'available' },
 	});
 
-	if (!user) return next(new AppError('user not available', 401));
+	if (!user) return next(new AppError('user session is not available', 401));
 
 	// Add data to request object
 	req.currentUser = user;
@@ -67,9 +66,7 @@ exports.protectUserOwner = catchAsync(async (req, res, next) => {
 	const { currentUser } = req;
 
 	if (+id !== +currentUser.id) {
-		return next(
-			new AppError(`You are not the owner of this account: ${name}`, 404)
-		);
+		return next(new AppError(`You are not the owner of this account: ${name}`, 404));
 	}
 
 	next();

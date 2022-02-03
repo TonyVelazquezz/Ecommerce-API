@@ -1,6 +1,6 @@
 const { Sequelize, DataTypes } = require('sequelize');
 // Config
-const { dbConfig } = require('../config');
+const { dbConfig, environment } = require('../config');
 
 const db = new Sequelize({
 	dialect: dbConfig.dialect,
@@ -10,12 +10,14 @@ const db = new Sequelize({
 	database: dbConfig.database,
 	port: dbConfig.port,
 	logging: false,
-	dialectOptions: {
-		ssl: {
-			require: true,
-			rejectUnauthorized: false,
-		},
-	},
+	dialectOptions:
+		environment === 'production'
+			? {
+					ssl: {
+						rejectUnauthorized: false,
+					},
+			  }
+			: {},
 });
 
 module.exports = { db, DataTypes };

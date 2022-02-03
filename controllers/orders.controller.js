@@ -259,7 +259,7 @@ exports.getUserOrders = catchAsync(async (req, res, next) => {
 		include: [
 			{
 				model: ProductInOrder,
-				// attributes: { exclude: ['productId', 'orderId', 'status'] },
+				attributes: { exclude: ['productId', 'orderId', 'status'] },
 				where: { status: 'available' },
 				include: [
 					{
@@ -274,4 +274,30 @@ exports.getUserOrders = catchAsync(async (req, res, next) => {
 	if (!orders) return next(new AppError('orders not found', 404));
 
 	res.status(200).json({ status: 'success', orders });
+});
+
+exports.getOrderById = catchAsync(async (req, res, next) => {
+	const { id } = req.params;
+
+	const order = await Order.findOne({
+		where: { id, status: 'active' },
+		attributes: { exclude: ['status'] },
+		include: [
+			{
+				model: ProductInOrder,
+				attributes: { exclude: ['productId', 'orderId', 'status'] },
+				where: { status: 'available' },
+				include: [
+					{
+						model: Product,
+						attributes: { exclude: ['price', 'userId', 'status', 'quantity'] },
+					},
+				],
+			},
+		],
+	});
+
+	if (!order) return next(new AppError('This order is not available', 404));
+
+	res.status(200).json({ status: 'success', order });
 });
